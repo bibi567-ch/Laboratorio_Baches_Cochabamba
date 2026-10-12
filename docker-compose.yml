@@ -1,0 +1,37 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports: ["5672:5672", "15672:15672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  repairs:
+    build: .
+    command: python -m app.grpc_server
+    ports: ["50051:50051"]
+  api:
+    build: .
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports: ["8000:8000"]
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      GRPC_TARGET: repairs:50051
+      DATABASE_PATH: /data/reportes.db
+    volumes: ["reportes_data:/data"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      repairs:
+        condition: service_started
+  notifications:
+    build: .
+    command: python -m app.notification_worker
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+volumes:
+  reportes_data:

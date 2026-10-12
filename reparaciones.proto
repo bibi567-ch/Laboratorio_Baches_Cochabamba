@@ -1,0 +1,16 @@
+syntax = "proto3";
+package baches;
+service ReparacionesService {
+  rpc ConfirmarReparacion (ConfirmarReparacionRequest) returns (ConfirmarReparacionResponse);
+}
+message ConfirmarReparacionRequest {
+  int32 reporte_id = 1;
+  string reparado_por = 2;
+  string observacion = 3;
+}
+message ConfirmarReparacionResponse {
+  bool confirmado = 1;
+  int32 reporte_id = 2;
+  string estado = 3;
+  string mensaje = 4;
+}
